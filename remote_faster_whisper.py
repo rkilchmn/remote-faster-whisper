@@ -84,25 +84,25 @@ class FasterWhisperApi:
                     "message": "Request data did not contain an 'audio_file' in its files"
                 }, 400
 
-            try:
-                rec = Recognizer()
-                with AudioFile(f) as source:
-                    audio = rec.record(source)
+            # try:
+            #     rec = Recognizer()
+            #     with AudioFile(f) as source:
+            #         audio = rec.record(source)
 
-                assert isinstance(audio, AudioData)
-                data = audio.get_wav_data(convert_rate=16000)
-                if self.save_audio:
-                    runtime = time()
-                    makedirs(f"{self.save_path}/{runtime}")
-                    with open(f"{self.save_path}/{runtime}/audio.wav", "wb") as fh:
-                        fh.write(data)
+            #     assert isinstance(audio, AudioData)
+            #     data = audio.get_wav_data(convert_rate=16000)
+            #     if self.save_audio:
+            #         runtime = time()
+            #         makedirs(f"{self.save_path}/{runtime}")
+            #         with open(f"{self.save_path}/{runtime}/audio.wav", "wb") as fh:
+            #             fh.write(data)
 
-            except Exception:
-                return {
-                    "message": "The 'audio_file' must contain valid WAV audio data"
-                }, 400
+            # except Exception:
+            #     return {
+            #         "message": "The 'audio_file' must contain valid WAV audio data"
+            #     }, 400
 
-            return self.perform_faster_whisper_recognition(audio)
+            return self.perform_faster_whisper_recognition(f)
 
         self.app.register_blueprint(self.blueprint)
 
@@ -129,13 +129,13 @@ class FasterWhisperApi:
         print("Performing recognition on audio data")
 
         t_start = time()
-        wav_bytes = audio_data.get_wav_data(convert_rate=16000)
-        wav_stream = BytesIO(wav_bytes)
-        audio_array, sampling_rate = sf_read(wav_stream)
-        audio_array = audio_array.astype(float32)
+        # wav_bytes = audio_data.get_wav_data(convert_rate=16000)
+        # wav_stream = BytesIO(wav_bytes)
+        # audio_array, sampling_rate = sf_read(wav_stream)
+        # audio_array = audio_array.astype(float32)
 
         segments, info = self.whisper_model.transcribe(
-            audio_array,
+            audio_data,
             beam_size=self.beam_size,
             language=self.language,
             task="translate" if self.translate else "transcribe",
@@ -147,18 +147,19 @@ class FasterWhisperApi:
         text = " ".join(found_text).strip()
 
         # Perform transformations on text
-        if 'lower' in self.transformations:
-            text = text.lower()
-        if 'casefold' in self.transformations:
-            text = text.casefold()
-        if 'upper' in self.transformations:
-            text = text.upper()
-        if 'title' in self.transformations:
-            text = text.title()
-        for tr in [tr for tr in self.transformations if isinstance(tr, list) and search(tr[0], text)]:
-            _text = text
-            text = sub(tr[0], tr[1], text)
-            print(f'Transforming "{tr[0]}" -> "{tr[1]}": pre: "{_text}", post: "{text}"')
+        if self.transformations:
+            if 'lower' in self.transformations:
+                text = text.lower()
+            if 'casefold' in self.transformations:
+                text = text.casefold()
+            if 'upper' in self.transformations:
+                text = text.upper()
+            if 'title' in self.transformations:
+                text = text.title()
+            for tr in [tr for tr in self.transformations if isinstance(tr, list) and search(tr[0], text)]:
+                _text = text
+                text = sub(tr[0], tr[1], text)
+                print(f'Transforming "{tr[0]}" -> "{tr[1]}": pre: "{_text}", post: "{text}"')
 
         t_end = time()
         t_run = t_end - t_start

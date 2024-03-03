@@ -11,7 +11,7 @@ faster_whisper:
   model_cache_dir: /tmp/whisper-cache
   model: small
   device: cuda
-  device_index: 1
+  device_index: 0
   compute_type: int8
   beam_size: 5
   translate: yes
