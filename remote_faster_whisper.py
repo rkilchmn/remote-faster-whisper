@@ -20,7 +20,7 @@
 ###############################################################################
 
 from configargparse import ArgParser
-from flask import Flask, Blueprint, request
+from flask import Flask, Blueprint, request, Response, jsonify
 from speech_recognition.audio import AudioData
 from faster_whisper import WhisperModel
 from io import BytesIO
@@ -33,6 +33,8 @@ from numpy import float32
 from soundfile import read as sf_read
 from re import sub, search
 
+import time
+import json
 
 class FasterWhisperApi:
     def __init__(
@@ -64,6 +66,7 @@ class FasterWhisperApi:
         self.beam_size = faster_whisper_config.get("beam_size", 5)
         self.translate = faster_whisper_config.get("translate", False)
         self.language = faster_whisper_config.get("language", None)
+        self.local_files_only = faster_whisper_config.get("local_files_only", False)        
         if not self.language:
             self.language = None
 
@@ -77,32 +80,46 @@ class FasterWhisperApi:
 
         @self.blueprint.route("/transcribe", methods=["POST"])
         def transcribe():
+
+            def result_generator( info, segments):
+
+                # return json objects with newline
+                with self.app.app_context():
+                    attributes = json.dumps(info._asdict())
+                    yield '{"TranscriptionInfo" : ' + attributes + ' }\n'
+
+                    for segment in segments:
+                        attributes = json.dumps(segment._asdict())
+                        yield '{"Segment" : ' + attributes + ' }\n'
+
             try:
                 f = request.files["audio_file"]
+
             except Exception:
                 return {
                     "message": "Request data did not contain an 'audio_file' in its files"
                 }, 400
 
-            # try:
-            #     rec = Recognizer()
-            #     with AudioFile(f) as source:
-            #         audio = rec.record(source)
 
-            #     assert isinstance(audio, AudioData)
-            #     data = audio.get_wav_data(convert_rate=16000)
-            #     if self.save_audio:
-            #         runtime = time()
-            #         makedirs(f"{self.save_path}/{runtime}")
-            #         with open(f"{self.save_path}/{runtime}/audio.wav", "wb") as fh:
-            #             fh.write(data)
-
-            # except Exception:
-            #     return {
-            #         "message": "The 'audio_file' must contain valid WAV audio data"
-            #     }, 400
-
-            return self.perform_faster_whisper_recognition(f)
+            try:
+                # call model to analyse file and generate the gegments
+                segments, info = self.whisper_model.transcribe(
+                    f,
+                    beam_size=self.beam_size,
+                    language=self.language,
+                    task="translate" if self.translate else "transcribe",
+                )
+            except Exception as e:
+                exception_info = f"Exception Type: {type(e)}\n"
+                exception_info += f"Exception Arguments: {e.args}\n"
+                exception_info += f"Exception Message: {e}"
+                return {
+                    # Generate a string containing essential information about the exception
+                    "message": "Calling model failed: " + exception_info
+                }, 400
+            
+            # call generator function which processes each segment
+            return Response(result_generator(info, segments))
 
         self.app.register_blueprint(self.blueprint)
 
@@ -117,6 +134,7 @@ class FasterWhisperApi:
             device_index=self.device_index,
             compute_type=self.compute_type,
             download_root=self.model_cache_dir,
+            local_files_only=self.local_files_only
         )
 
         print("Starting API")

@@ -6,7 +6,7 @@
             "type": "debugpy",
             "request": "launch",
             "python": "${workspaceFolder}/.venv/bin/python",
-            "program": "${file}",
+            "program": "remote_faster_whisper.py",
             "console": "integratedTerminal",
             "env": {
                 "LD_LIBRARY_PATH": "${env:LD_LIBRARY_PATH}:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib",

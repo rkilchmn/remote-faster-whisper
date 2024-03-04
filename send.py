@@ -22,10 +22,22 @@
 
 from sys import argv
 import requests
+import json
 
 filename = argv[1]
 
 files = {"audio_file": open(filename, "rb")}
 
-r = requests.post("http://localhost:9876/api/v0/transcribe", files=files)
-print(f"{r.status_code}: {r.json()}")
+r = requests.post("http://localhost:9876/api/v0/transcribe", files=files, stream=True)
+
+# Iterate over the response content as it arrives
+for line in r.iter_lines():
+    # Decode JSON string to dictionary
+    data = json.loads(line)
+
+    # Process the received JSON data
+    print(data)  # Example: Print the data
+
+    # Add your processing logic here
+
+print(f"{r.status_code}")
