@@ -88,9 +88,18 @@ class FasterWhisperApi:
                     attributes = json.dumps(info._asdict())
                     yield '{"TranscriptionInfo" : ' + attributes + ' }\n'
 
-                    for segment in segments:
-                        attributes = json.dumps(segment._asdict())
-                        yield '{"Segment" : ' + attributes + ' }\n'
+                    try:
+                        for segment in segments:
+                            attributes = json.dumps(segment._asdict())
+                            yield '{"Segment" : ' + attributes + ' }\n'
+                    except Exception as e:
+                        exception_info = f"Exception Type: {type(e)}\n"
+                        exception_info += f"Exception Arguments: {e.args}\n"
+                        exception_info += f"Exception Message: {e}"
+                        return {
+                            # Generate a string containing essential information about the exception
+                            "message": "Processing segment failed: " + exception_info
+                        }, 400
 
             try:
                 f = request.files["audio_file"]
@@ -103,11 +112,45 @@ class FasterWhisperApi:
 
             try:
                 # call model to analyse file and generate the gegments
+                # segments, info = self.whisper_model.transcribe(
+                #     f,
+                #     beam_size=self.beam_size,
+                #     language=self.language,
+                #     task="translate" if self.translate else "transcribe",
+                # )
+
+                # Parse JSON string into a Python list
+                temperature = None
+                if request.args.get('temperature') is not None:
+                    data_list = json.loads(request.args.get('temperature'))
+                    # Convert list elements to floats and create a tuple
+                    temperature = tuple(float(x) for x in data_list)
+
                 segments, info = self.whisper_model.transcribe(
-                    f,
-                    beam_size=self.beam_size,
-                    language=self.language,
-                    task="translate" if self.translate else "transcribe",
+                    audio=f,
+                    language=request.args.get('language'),
+                    task=request.args.get('task'),
+                    beam_size=int(request.args.get('beam_size')) if request.args.get('beam_size') is not None else None,
+                    best_of=int(request.args.get('best_of')) if request.args.get('best_of') is not None else None,
+                    patience=float(request.args.get('patience')) if request.args.get('patience') is not None else None,
+                    length_penalty=float(request.args.get('length_penalty')) if request.args.get('length_penalty') is not None else None,
+                    repetition_penalty=float(request.args.get('repetition_penalty')) if request.args.get('repetition_penalty') is not None else None,
+                    no_repeat_ngram_size=int(request.args.get('no_repeat_ngram_size')) if request.args.get('no_repeat_ngram_size') is not None else None,
+                    temperature=temperature,
+                    compression_ratio_threshold=float(request.args.get('compression_ratio_threshold')) if request.args.get('compression_ratio_threshold') is not None else None,
+                    log_prob_threshold=float(request.args.get('log_prob_threshold')) if request.args.get('log_prob_threshold') is not None else None,
+                    no_speech_threshold=float(request.args.get('no_speech_threshold')) if request.args.get('no_speech_threshold') is not None else None,
+                    condition_on_previous_text=bool(request.args.get('condition_on_previous_text')) if request.args.get('condition_on_previous_text') is not None else None,
+                    prompt_reset_on_temperature=bool(request.args.get('prompt_reset_on_temperature')) if request.args.get('prompt_reset_on_temperature') is not None else None,
+                    initial_prompt=request.args.get('initial_prompt'),
+                    suppress_blank=bool(request.args.get('suppress_blank')) if request.args.get('suppress_blank') is not None else None,
+                    suppress_tokens=json.loads(request.args.get('suppress_tokens')) if request.args.get('suppress_tokens') is not None else None,
+                    word_timestamps=True if request.args.get('word_timestamps') == 'True' else False,
+                    prepend_punctuations=bool(request.args.get('prepend_punctuations')) if request.args.get('prepend_punctuations') is not None else None,
+                    append_punctuations=bool(request.args.get('append_punctuations')) if request.args.get('append_punctuations') is not None else None,
+                    hallucination_silence_threshold=float(request.args.get('hallucination_silence_threshold')) if request.args.get('hallucination_silence_threshold') is not None else None,
+                    vad_filter=request.args.get('vad_filter'),
+                    vad_parameters=json.loads(request.args.get('vad_parameters')) if request.args.get('vad_parameters') is not None else None,
                 )
             except Exception as e:
                 exception_info = f"Exception Type: {type(e)}\n"
