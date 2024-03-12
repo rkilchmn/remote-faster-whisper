@@ -139,3 +139,13 @@ This will ensure a fully-lowercase result, with no (common) punctuation, " is on
 **Note:** You should use this feature sparingly. A large number of transformations might slow down your transcription time considerably, and you must be mindful of the implications each transformation will have on all possible texts that are parsed. They work best with only a few common mishearings and when using relatively short text strings, for example in a voice command system.
 
 **Note:** Regexes in the first field are normal strings, i.e. they are not treated as raw strings. Be mindful of complex regexes.
+
+# Docker
+
+docker build -t remote-faster-whisper:latest .
+
+docker run -d --restart unless-stopped --name remote-faster-whisper -p 9876:9876  -v ./config.yaml:/app/config.yaml -v ./whisper-cache:/app/whisper-cache remote-faster-whisper:latest
+
+docker logs remote-faster-whisper
+docker container exec -u 0 -it remote-faster-whisper /bin/bash
+
