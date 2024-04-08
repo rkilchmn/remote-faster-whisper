@@ -9,7 +9,7 @@ faster_whisper:
     save_audio: no
     save_path: /tmp/rfw
   model_cache_dir: whisper-cache
-  local_files_only: True
+  local_files_only: False
   model: small
   device: cuda
   device_index: 0
