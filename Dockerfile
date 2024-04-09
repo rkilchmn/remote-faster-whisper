@@ -29,12 +29,14 @@ RUN apt-get update \
     && apt-get -qq update \
     && apt-get -qq install --no-install-recommends -y \
     nvidia-container-runtime \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* 
 
 WORKDIR /app
 
 COPY remote_faster_whisper.py .
 COPY config.yaml .
+
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/python3.8/dist-packages/nvidia/cudnn/lib
 
 # CMD with configurable config.yaml path
 CMD ["python3", "remote_faster_whisper.py", "-c", "config.yaml"]
