@@ -1,14 +1,8 @@
-FROM ubuntu:20.04 as base
-
-ENV PYTHON_VERSION=3.10
-
-ENV NVIDIA_DRIVER_CAPABILITIES=compute
-ENV NVIDIA_VISIBLE_DEVICES all
+FROM ubuntu:22.04 as base
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install --no-install-recommends -y \
-    python${PYTHON_VERSION} \
     python3-pip
     
 COPY requirements.txt .    
@@ -31,12 +25,15 @@ RUN apt-get update \
     nvidia-container-runtime \
     && rm -rf /var/lib/apt/lists/* 
 
+ENV NVIDIA_DRIVER_CAPABILITIES=compute
+ENV NVIDIA_VISIBLE_DEVICES all
+
 WORKDIR /app
 
 COPY remote_faster_whisper.py .
 COPY config.yaml .
 
-ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/python3.8/dist-packages/nvidia/cudnn/lib
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib
 
 # CMD with configurable config.yaml path
 CMD ["python3", "remote_faster_whisper.py", "-c", "config.yaml"]
