@@ -30,6 +30,7 @@ from time import time
 from yaml import safe_load
 from speech_recognition import Recognizer, AudioFile
 from numpy import float32
+import numpy as np
 from soundfile import read as sf_read
 from re import sub, search
 
@@ -44,6 +45,8 @@ class FasterWhisperApi:
         base_url="/api/v0",
         faster_whisper_config={},
         transformations={},
+        audio_file_reqest_param = 'audio_file',
+        audio_form_reqest_param = 'audio_form',
     ):
         """
         Initialize the API and Faster Whisper configuration
@@ -102,13 +105,17 @@ class FasterWhisperApi:
                         }, 400
 
             try:
-                f = request.files["audio_file"]
+                if audio_file_reqest_param in request.files:
+                    audio_input = request.files[audio_file_reqest_param]
+                elif request.data:
+                    audio_input = np.frombuffer(request.data, dtype=np.float32)
+                else:
+                    raise ValueError("Request did not contain any audio file or binary audio data")
 
-            except Exception:
+            except Exception as e:
                 return {
-                    "message": "Request data did not contain an 'audio_file' in its files"
+                    "message": e.args[0]
                 }, 400
-
 
             try:
                 # call model to analyse file and generate the gegments
@@ -127,7 +134,7 @@ class FasterWhisperApi:
                     temperature = tuple(float(x) for x in data_list)
 
                 segments, info = self.whisper_model.transcribe(
-                    audio=f,
+                    audio=audio_input,
                     language=request.args.get('language'),
                     task=request.args.get('task'),
                     beam_size=int(request.args.get('beam_size')) if request.args.get('beam_size') is not None else None,
