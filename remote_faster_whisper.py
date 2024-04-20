@@ -92,18 +92,14 @@ class FasterWhisperApi:
                     yield '{"TranscriptionInfo" : ' + attributes + ' }\n'
 
                     try:
-                        for segment in segments:
+                         for segment in segments:
                             attributes = json.dumps(segment._asdict())
                             yield '{"Segment" : ' + attributes + ' }\n'
                     except Exception as e:
                         exception_info = f"Exception Type: {type(e)}\n"
                         exception_info += f"Exception Arguments: {e.args}\n"
                         exception_info += f"Exception Message: {e}"
-                        return {
-                            # Generate a string containing essential information about the exception
-                            "message": "Processing segment failed: " + exception_info
-                        }, 400
-
+                        print(exception_info)
             try:
                 if audio_file_reqest_param in request.files:
                     audio_input = request.files[audio_file_reqest_param]
@@ -118,21 +114,30 @@ class FasterWhisperApi:
                 }, 400
 
             try:
-                # call model to analyse file and generate the gegments
-                # segments, info = self.whisper_model.transcribe(
-                #     f,
-                #     beam_size=self.beam_size,
-                #     language=self.language,
-                #     task="translate" if self.translate else "transcribe",
-                # )
+            # call model to analyse file and generate the gegments
+            # segments, info = self.whisper_model.transcribe(
+            #     f,
+            #     beam_size=self.beam_size,
+            #     language=self.language,
+            #     task="translate" if self.translate else "transcribe",
+            # )
 
                 # Parse JSON string into a Python list
-                temperature = None
                 if request.args.get('temperature') is not None:
                     data_list = json.loads(request.args.get('temperature'))
                     # Convert list elements to floats and create a tuple
                     temperature = tuple(float(x) for x in data_list)
-
+                else:
+                    # passing temperature=None does not result in using paramter default in transcribe() -> define default here
+                    temperature = [
+                        0.0,
+                        0.2,
+                        0.4,
+                        0.6,
+                        0.8,
+                        1.0,
+                    ]
+                    
                 segments, info = self.whisper_model.transcribe(
                     audio=audio_input,
                     language=request.args.get('language'),
@@ -156,7 +161,7 @@ class FasterWhisperApi:
                     prepend_punctuations=bool(request.args.get('prepend_punctuations')) if request.args.get('prepend_punctuations') is not None else None,
                     append_punctuations=bool(request.args.get('append_punctuations')) if request.args.get('append_punctuations') is not None else None,
                     hallucination_silence_threshold=float(request.args.get('hallucination_silence_threshold')) if request.args.get('hallucination_silence_threshold') is not None else None,
-                    vad_filter=request.args.get('vad_filter'),
+                    vad_filter=bool(request.args.get('vad_filter') == 'True') if request.args.get('vad_filter') is not None else None,
                     vad_parameters=json.loads(request.args.get('vad_parameters')) if request.args.get('vad_parameters') is not None else None,
                 )
             except Exception as e:
