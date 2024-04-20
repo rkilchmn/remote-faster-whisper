@@ -45,8 +45,7 @@ class FasterWhisperApi:
         base_url="/api/v0",
         faster_whisper_config={},
         transformations={},
-        audio_file_reqest_param = 'audio_file',
-        audio_form_reqest_param = 'audio_form',
+        audio_file_reqest_param = 'file',
     ):
         """
         Initialize the API and Faster Whisper configuration
@@ -114,13 +113,6 @@ class FasterWhisperApi:
                 }, 400
 
             try:
-            # call model to analyse file and generate the gegments
-            # segments, info = self.whisper_model.transcribe(
-            #     f,
-            #     beam_size=self.beam_size,
-            #     language=self.language,
-            #     task="translate" if self.translate else "transcribe",
-            # )
 
                 # Parse JSON string into a Python list
                 if request.args.get('temperature') is not None:
