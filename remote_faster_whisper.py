@@ -174,7 +174,7 @@ class FasterWhisperApi:
         """
         Initialize the WhisperModel (including downloading the model files) and start the API
         """
-        print("Initializing WhisperModel instance")
+        print(f"Initializing WhisperModel instance ( model: {self.model} device: {self.device})")
         self.whisper_model = WhisperModel(
             self.model,
             device=self.device,
