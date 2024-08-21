@@ -1,0 +1,28 @@
+---
+daemon:
+  listen: 0.0.0.0
+  port: 9876
+  base_url: "/api/v0"
+
+faster_whisper:
+  debug:
+    save_audio: no
+    save_path: /tmp/rfw
+  model_cache_dir: whisper-cache
+  local_files_only: False
+  model: distil-large-v3
+  device: cuda
+  device_index: 0
+  compute_type: int8
+  beam_size: 5
+  translate: False
+  language: 
+
+transformations:
+# Examples:
+# lowercase the string
+# - lower
+# replace punctuation; note the double-bashslash for a literal '.'
+# - ["[\\.,!?]", ""]
+# substitute "trash was/with" with "joshua's"
+# - ["trash (was|with)", "joshua's"]
