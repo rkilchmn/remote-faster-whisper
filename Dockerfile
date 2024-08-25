@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 as base
+FROM ubuntu:22.04 AS base
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
@@ -26,14 +26,14 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* 
 
 ENV NVIDIA_DRIVER_CAPABILITIES=compute
-ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_VISIBLE_DEVICES=all
 
 WORKDIR /app
 
 COPY remote_faster_whisper.py .
 COPY config.yaml .
 
-ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib
+ENV LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:${LD_LIBRARY_PATH}
 
 # CMD with configurable config.yaml path
 CMD ["python3", "remote_faster_whisper.py", "-c", "config.yaml"]
