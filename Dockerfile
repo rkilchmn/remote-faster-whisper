@@ -33,7 +33,7 @@ WORKDIR /app
 COPY remote_faster_whisper.py .
 COPY config.yaml .
 
-ENV LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:${LD_LIBRARY_PATH}
+# ENV LD_LIBRARY_PATH=/usr/local/lib/python3.10/dist-packages/nvidia/cudnn/lib:${LD_LIBRARY_PATH}
 
 # CMD with configurable config.yaml path
 CMD ["python3", "remote_faster_whisper.py", "-c", "config.yaml"]
