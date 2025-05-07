@@ -1,5 +1,5 @@
 pyyaml
-torch==2.2.2
+torch
 SpeechRecognition
 soundfile
 faster_whisper
