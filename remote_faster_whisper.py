@@ -19,6 +19,7 @@
 #
 ###############################################################################
 
+from dataclasses import asdict
 from configargparse import ArgParser
 from flask import Flask, Blueprint, request, Response, jsonify
 from speech_recognition.audio import AudioData
@@ -33,7 +34,7 @@ from numpy import float32
 import numpy as np
 from soundfile import read as sf_read
 from re import sub, search
-
+from dataclasses import asdict
 import time
 import json
 
@@ -87,12 +88,14 @@ class FasterWhisperApi:
 
                 # return json objects with newline
                 with self.app.app_context():
-                    attributes = json.dumps(info._asdict())
+                     # attributes = json.dumps(info.asdict())
+                    attributes = json.dumps(asdict(info))
                     yield '{"TranscriptionInfo" : ' + attributes + ' }\n'
 
                     try:
                          for segment in segments:
-                            attributes = json.dumps(segment._asdict())
+                            # attributes = json.dumps(segment._asdict())
+                            attributes = json.dumps(asdict(segment))
                             yield '{"Segment" : ' + attributes + ' }\n'
                     except Exception as e:
                         exception_info = f"Exception Type: {type(e)}\n"
